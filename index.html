@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stock Market App</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/recharts/umd/Recharts.min.js"></script>
+  <script src="https://cdn.jsdelivr.com/npm/lucide-react/dist/umd/lucide-react.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f5f7fa; color: #17212f; font-family: Arial, sans-serif; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .app-shell { min-height: 100vh; }
+
+    .sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      width: 220px;
+      padding: 26px 16px;
+      background: #fff;
+      border-right: 1px solid #e8ebf0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 12px 34px;
+      color: #138b68;
+      font-size: 19px;
+      font-weight: 700;
+    }
+
+    .sidebar nav { display: grid; gap: 7px; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 0;
+      background: transparent;
+      padding: 12px;
+      color: #768294;
+      text-align: left;
+      border-radius: 9px;
+    }
+
+    .nav-item.selected,
+    .nav-item:hover { background: #eaf7f2; color: #138b68; }
+
+    .sidebar-note {
+      margin-top: auto;
+      padding: 12px;
+      font-size: 12px;
+      color: #9aa3b0;
+    }
+
+    .main {
+      max-width: 1280px;
+      margin-left: 220px;
+      padding: 28px 34px 50px;
+    }
+
+    .topbar,
+    .panel-heading,
+    .stock-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .topbar { margin-bottom: 22px; }
+    h1 { margin: 3px 0 0; font-size: 27px; }
+    h2 { margin: 0; font-size: 18px; }
+
+    .eyebrow {
+      color: #929baa;
+      font-size: 10px;
+      letter-spacing: 1.2px;
+      font-weight: 700;
+    }
+
+    .top-actions { display: flex; gap: 10px; }
+
+    .searchbox,
+    .icon-button {
+      height: 40px;
+      border: 1px solid #e6eaf0;
+      background: #fff;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      color: #7d8795;
+    }
+
+    .searchbox { padding: 0 11px; gap: 8px; }
+    .searchbox input { width: 145px; border: 0; outline: 0; }
+    .icon-button { width: 40px; justify-content: center; }
+
+    .market-strip,
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .market-strip > div,
+    .stat-card,
+    .panel {
+      background: #fff;
+      border: 1px solid #e9edf2;
+      border-radius: 13px;
+    }
+
+    .market-strip > div {
+      padding: 14px 17px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .market-strip strong { font-size: 17px; }
+    .market-strip small { font-size: 12px; color: #929baa; }
+    .market-open { color: #139b70; }
+
+    .stat-card {
+      padding: 15px 17px;
+      display: grid;
+      gap: 7px;
+    }
+
+    .stat-card strong { font-size: 20px; }
+
+    .muted { color: #8b95a3; font-size: 13px; }
+    .positive { color: #109b70 !important; }
+    .negative { color: #dd5b64 !important; }
+
+    .panel { padding: 20px; margin-bottom: 16px; }
+    .chart-panel { padding-bottom: 14px; }
+    .stock-heading { align-items: flex-start; }
+    .stock-heading h2 { margin: 3px 0; }
+
+    .price-line {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .price-line strong { font-size: 23px; }
+
+    .timeframes { display: flex; gap: 5px; }
+    .timeframes button {
+      border: 0;
+      background: transparent;
+      color: #8792a0;
+      border-radius: 6px;
+      padding: 7px 10px;
+    }
+
+    .timeframes button.active {
+      background: #eaf7f2;
+      color: #128b68;
+    }
+
+    .chart-wrap {
+      height: 260px;
+      margin: 18px -3px 0;
+    }
+
+    .indicator-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 8px 0 15px;
+      color: #657184;
+      font-size: 12px;
+    }
+
+    .indicator-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #657184;
+      border: 0;
+      background: transparent;
+      padding: 0;
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .green { background: #159b70; }
+    .orange { background: #e9a23b; }
+
+    .subcharts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      border-top: 1px solid #eef0f4;
+      padding-top: 14px;
+    }
+
+    .subchart-title {
+      margin-bottom: 5px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .subchart-title span {
+      margin-left: 6px;
+      color: #9aa3b0;
+      font-weight: 400;
+    }
+
+    .text-button {
+      border: 0;
+      background: transparent;
+      color: #138b68;
+      font-weight: 600;
+    }
+
+    .stock-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 2px;
+      border: 0;
+      border-bottom: 1px solid #f0f2f5;
+      background: #fff;
+      text-align: left;
+    }
+
+    .stock-row:last-child { border-bottom: 0; }
+
+    .stock-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: #eef5ff;
+      color: #4a70b5;
+      font-weight: 700;
+    }
+
+    .stock-name,
+    .stock-quote { display: grid; gap: 3px; }
+    .stock-name span { color: #8b95a3; font-size: 12px; }
+    .stock-quote { margin-left: auto; text-align: right; }
+    .stock-quote span { font-size: 12px; }
+
+    .holding-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 22px;
+      padding: 18px 0;
+      color: #7c8795;
+      font-size: 13px;
+    }
+
+    .holding-summary b {
+      display: block;
+      color: #17212f;
+      margin-top: 5px;
+      font-size: 16px;
+    }
+
+    .order-row {
+      display: grid;
+      grid-template-columns: 1fr 130px 100px;
+      align-items: center;
+      gap: 12px;
+      padding: 17px 0;
+      border-bottom: 1px solid #eef0f4;
+    }
+
+    .order-row > div { display: grid; gap: 4px; }
+    .pending { color: #d2912e; }
+
+    .account-panel { max-width: 560px; }
+    .avatar { color: #138b68; margin-bottom: 12px; }
+
+    .account-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 17px 0;
+      border-bottom: 1px solid #eef0f4;
+      color: #657184;
+    }
+
+    .account-row b { margin-left: auto; color: #17212f; }
+    .empty-state { color: #8b95a3; padding: 22px 0; }
+
+    footer {
+      text-align: center;
+      color: #9aa3b0;
+      font-size: 11px;
+      padding: 10px;
+    }
+
+    .mobile-nav { display: none; }
+
+    @media (max-width: 760px) {
+      .sidebar { display: none; }
+      .main { margin: 0; padding: 20px 14px 86px; }
+      .topbar { align-items: flex-start; }
+      h1 { font-size: 23px; }
+      .searchbox input { width: 90px; }
+
+      .market-strip { gap: 8px; }
+      .market-strip > div { padding: 11px 9px; }
+      .market-strip strong { font-size: 14px; }
+      .market-strip .muted,
+      .market-strip small { font-size: 10px; }
+
+      .overview-grid { grid-template-columns: 1fr 1fr; }
+      .stat-card:last-child { grid-column: span 2; }
+      .stat-card { padding: 13px; }
+      .stat-card strong { font-size: 17px; }
+
+      .panel { padding: 15px; }
+      .chart-wrap { height: 220px; }
+      .subcharts { gap: 10px; }
+      .timeframes { gap: 0; }
+      .timeframes button { padding: 7px; font-size: 12px; }
+
+      .mobile-nav {
+        position: fixed;
+        z-index: 5;
+        inset: auto 0 0;
+        height: 66px;
+        padding: 5px 3px 0;
+        display: flex;
+        justify-content: space-around;
+        background: #fff;
+        border-top: 1px solid #e8ebf0;
+      }
+
+      .mobile-nav button {
+        display: grid;
+        justify-items: center;
+        align-content: center;
+        gap: 3px;
+        border: 0;
+        background: transparent;
+        color: #8b95a3;
+        font-size: 10px;
+      }
+
+      .mobile-nav button.selected { color: #138b68; }
+      .order-row { grid-template-columns: 1fr auto; }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const {
+      Area, AreaChart, Bar, BarChart, CartesianGrid,
+      Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis
+    } = Recharts;
+
+    const stocks = [
+      { symbol: "RELIANCE", name: "Reliance Industries", price: 1428.6, change: 1.24 },
+      { symbol: "TCS", name: "Tata Consultancy Services", price: 3284.2, change: -0.48 },
+      { symbol: "INFY", name: "Infosys", price: 1542.8, change: 0.82 },
+      { symbol: "HDFCBANK", name: "HDFC Bank", price: 1681.4, change: 0.36 },
+      { symbol: "TATAMOTORS", name: "Tata Motors", price: 734.1, change: -1.12 }
+    ];
+
+    function makeChartData(base) {
+      let previous = base * 0.96;
+
+      return Array.from({ length: 30 }, (_, i) => {
+        const close = base * 0.96 + i * base * 0.0013 +
+          Math.sin(i * 0.9) * base * 0.012;
+        const open = previous;
+        previous = close;
+
+        return {
+          day: String(i + 1),
+          price: Number(close.toFixed(2)),
+          ema20: Number((base * 0.97 + i * base * 0.0011).toFixed(2)),
+          volume: 300 + Math.round((Math.sin(i * 1.7) + 1.4) * 260),
+          rsi: 45 + Math.sin(i * 0.55) * 18,
+          open: Number(open.toFixed(2))
+        };
+      });
+    }
+
+    function StatCard({ title, value, note, positive }) {
+      return (
+        <div className="stat-card">
+          <span className="muted">{title}</span>
+          <strong>{value}</strong>
+          {note && <span className={positive ? "positive" : "muted"}>{note}</span>}
+        </div>
+      );
+    }
+
+    function StockList({ items, onSelect }) {
+      if (!items.length) {
+        return <p className="empty-state">Koi stock nahi mila.</p>;
+      }
+
+      return (
+        <div>
+          {items.map(item => (
+            <button
+              className="stock-row"
+              key={item.symbol}
+              onClick={() => onSelect(item.symbol)}
+            >
+              <div className="stock-icon">{item.symbol.charAt(0)}</div>
+              <div className="stock-name">
+                <b>{item.symbol}</b>
+                <span>{item.name}</span>
+              </div>
+              <div className="stock-quote">
+                <b>₹{item.price.toLocaleString("en-IN")}</b>
+                <span className={item.change >= 0 ? "positive" : "negative"}>
+                  {item.change > 0 ? "+" : ""}{item.change}%
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    function App() {
+      const [page, setPage] = React.useState("Home");
+      const [selectedSymbol, setSelectedSymbol] = React.useState("RELIANCE");
+      const [timeframe, setTimeframe] = React.useState("1D");
+      const [showEma, setShowEma] = React.useState(true);
+      const [query, setQuery] = React.useState("");
+
+      const stock = stocks.find(item => item.symbol === selectedSymbol) || stocks[0];
+      const chartData = React.useMemo(() => makeChartData(stock.price), [stock.price]);
+
+      const filteredStocks = stocks.filter(item =>
+        `${item.symbol} ${item.name}`.toLowerCase().includes(query.toLowerCase())
+      );
+
+      const openStock = symbol => {
+        setSelectedSymbol(symbol);
+        setPage("Home");
+      };
+
+      const menu = [
+        ["Home", "⌂"],
+        ["Watchlist", "▥"],
+        ["Portfolio", "▣"],
+        ["Orders", "◷"],
+        ["Account", "◎"]
+      ];
+
+      return (
+        <div className="app-shell">
+          <aside className="sidebar">
+            <div className="brand">⌁ <span>TradeView</span></div>
+
+            <nav>
+              {menu.map(([label, icon]) => (
+                <button
+                  key={label}
+                  className={`nav-item ${page === label ? "selected" : ""}`}
+                  onClick={() => setPage(label)}
+                >
+                  <span>{icon}</span>{label}
+                </button>
+              ))}
+            </nav>
+
+            <div className="sidebar-note">Market demo · Mock data</div>
+          </aside>
+
+          <main className="main">
+            <header className="topbar">
+              <div>
+                <div className="eyebrow">MARKET OVERVIEW</div>
+                <h1>{page}</h1>
+              </div>
+
+              <div className="top-actions">
+                <label className="searchbox">
+                  <span>⌕</span>
+                  <input
+                    value={query}
+                    onChange={event => setQuery(event.target.value)}
+                    placeholder="Stock search"
+                  />
+                </label>
+                <button className="icon-button">⚙</button>
+              </div>
+            </header>
+
+            {page === "Home" && (
+              <>
+                <section className="market-strip">
+                  <div>
+                    <span className="muted">NIFTY 50</span>
+                    <strong>24,812.30</strong>
+                    <small className="positive">+0.64%</small>
+                  </div>
+                  <div>
+                    <span className="muted">SENSEX</span>
+                    <strong>81,330.50</strong>
+                    <small className="positive">+0.51%</small>
+                  </div>
+                  <div>
+                    <span className="muted">MARKET STATUS</span>
+                    <strong className="market-open">● Open</strong>
+                    <small>Demo display</small>
+                  </div>
+                </section>
+
+                <section className="overview-grid">
+                  <StatCard title="Portfolio value" value="₹2,48,560" note="+₹3,420 today" positive />
+                  <StatCard title="Available balance" value="₹45,000" note="Demo account" />
+                  <StatCard title="Today's P&L" value="+₹1,284" note="+0.52%" positive />
+                </section>
+
+                <section className="panel chart-panel">
+                  <div className="panel-heading stock-heading">
+                    <div>
+                      <span className="muted">{stock.name} · NSE</span>
+                      <h2>{stock.symbol}</h2>
+                      <div className="price-line">
+                        <strong>₹{stock.price.toLocaleString("en-IN")}</strong>
+                        <span className={stock.change >= 0 ? "positive" : "negative"}>
+                          {stock.change >= 0 ? "▲" : "▼"} {Math.abs(stock.change)}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="timeframes">
+                      {["1D", "1W", "1M", "1Y"].map(item => (
+                        <button
+                          key={item}
+                          className={timeframe === item ? "active" : ""}
+                          onClick={() => setTimeframe(item)}
+                        >
+                          {item}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="chart-wrap">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={chartData}>
+                        <defs>
+                          <linearGradient id="priceFill" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#18a879" stopOpacity={0.24} />
+                            <stop offset="100%" stopColor="#18a879" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid stroke="#eef1f5" vertical={false} />
+                        <XAxis dataKey="day" tickLine={false} axisLine={false} />
+                        <YAxis domain={["auto", "auto"]} orientation="right" tickLine={false} axisLine={false} />
+                        <Tooltip />
+                        <Area
+                          dataKey="price"
+                          stroke="#159b70"
+                          fill="url(#priceFill)"
+                          strokeWidth={2}
+                        />
+                        {showEma && (
+                          <Line
+                            dataKey="ema20"
+                            stroke="#e9a23b"
+                            dot={false}
+                            strokeWidth={1.7}
+                          />
+                        )}
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="indicator-row">
+                    <span><i className="legend-dot green"></i> Price</span>
+                    <button
+                      className="indicator-toggle"
+                      onClick={() => setShowEma(!showEma)}
+                    >
+                      <i className="legend-dot orange"></i> EMA 20
+                    </button>
+                    <span>▥ Indicators</span>
+                  </div>
+
+                  <div className="subcharts">
+                    <div className="subchart">
+                      <div className="subchart-title">
+                        RSI (14) <span>Momentum</span>
+                      </div>
+                      <ResponsiveContainer width="100%" height={100}>
+                        <LineChart data={chartData}>
+                          <CartesianGrid stroke="#eef1f5" vertical={false} />
+                          <XAxis dataKey="day" hide />
+                          <YAxis
+                            domain={[0, 100]}
+                            ticks={[30, 70]}
+                            orientation="right"
+                            tickLine={false}
+                            axisLine={false}
+                          />
+                          <Tooltip />
+                          <Line
+                            dataKey="rsi"
+                            stroke="#8268d8"
+                            dot={false}
+                            strokeWidth={2}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    <div className="subchart">
+                      <div className="subchart-title">
+                        Volume <span>Shares</span>
+                      </div>
+                      <ResponsiveContainer width="100%" height={100}>
+                        <BarChart data={chartData}>
+                          <XAxis dataKey="day" hide />
+                          <YAxis hide />
+                          <Tooltip />
+                          <Bar dataKey="volume" fill="#b9c9e8" radius={[3, 3, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="panel">
+                  <div className="panel-heading">
+                    <h2>Watchlist</h2>
+                    <button className="text-button" onClick={() => setPage("Watchlist")}>
+                      View all
+                    </button>
+                  </div>
+                  <StockList items={stocks.slice(0, 4)} onSelect={openStock} />
+                </section>
+              </>
+            )}
+
+            {page === "Watchlist" && (
+              <section className="panel">
+                <div className="panel-heading">
+                  <h2>My Watchlist</h2>
+                  <span className="muted">Tap a stock to view its chart</span>
+                </div>
+                <StockList items={filteredStocks} onSelect={openStock} />
+              </section>
+            )}
+
+            {page === "Portfolio" && (
+              <section className="panel">
+                <div className="panel-heading">
+                  <h2>My Holdings</h2>
+                  <span className="muted">Demo portfolio</span>
+                </div>
+
+                <div className="holding-summary">
+                  <span>Total investment <b>₹1,82,400</b></span>
+                  <span>Current value <b>₹2,04,560</b></span>
+                  <span>Total return <b className="positive">+₹22,160</b></span>
+                </div>
+
+                <StockList items={stocks.slice(0, 3)} onSelect={openStock} />
+              </section>
+            )}
+
+            {page === "Orders" && (
+              <section className="panel">
+                <div className="panel-heading">
+                  <h2>Recent Orders</h2>
+                  <span className="muted">Demo orders only</span>
+                </div>
+
+                {[
+                  ["RELIANCE", "Buy", "Completed", "₹1,428.60"],
+                  ["TCS", "Sell", "Pending", "₹3,284.20"],
+                  ["INFY", "Buy", "Completed", "₹1,542.80"]
+                ].map(([symbol, type, status, price]) => (
+                  <div className="order-row" key={symbol}>
+                    <div>
+                      <b>{symbol}</b>
+                      <span className="muted">{type} · Market order</span>
+                    </div>
+                    <span>{price}</span>
+                    <span className={status === "Completed" ? "positive" : "pending"}>
+                      {status}
+                    </span>
+                  </div>
+                ))}
+              </section>
+            )}
+
+            {page === "Account" && (
+              <section className="panel account-panel">
+                <div className="avatar">◎</div>
+                <h2>Demo User</h2>
+                <p className="muted">Your account and preferences</p>
+                <div className="account-row"><span>◈ Funds</span><b>₹45,000</b></div>
+                <div className="account-row"><span>▣ Account type</span><b>Demo</b></div>
+                <div className="account-row"><span>⚙ Settings</span><b>Manage</b></div>
+              </section>
+            )}
+
+            <footer>
+              Demo interface only. Prices are illustrative—not live market data or investment advice.
+            </footer>
+          </main>
+
+          <nav className="mobile-nav">
+            {menu.map(([label, icon]) => (
+              <button
+                key={label}
+                className={page === label ? "selected" : ""}
+                onClick={() => setPage(label)}
+              >
+                <span>{icon}</span>
+                <span>{label}</span>
+              </button>
+            ))}
+          </nav>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
